@@ -1,0 +1,55 @@
+<mujoco model="aerobot_pick_cube">
+  <compiler angle="radian" autolimits="true"/>
+  <option timestep="0.002" gravity="0 0 -9.81" impratio="10"/>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3"/>
+  </visual>
+
+  <asset>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5"/>
+  </asset>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
+
+    <!-- Mocap Target: Invisible controller that your hand moves directly -->
+    <body name="hand_mocap" mocap="true" pos="0 0 0.25">
+      <geom type="sphere" size="0.01" rgba="0 1 0 0.3" contype="0" conaffinity="0"/>
+    </body>
+
+    <!-- Physical Robotic Gripper (welded via soft constraint to mocap target) -->
+    <body name="gripper_base" pos="0 0 0.25">
+      <freejoint/>
+      <geom type="box" size="0.04 0.02 0.015" rgba="0.2 0.2 0.2 1" mass="0.2"/>
+
+      <body name="left_finger" pos="-0.03 0 -0.035">
+        <joint name="left_slide" type="slide" axis="1 0 0" range="0 0.025" damping="5"/>
+        <geom type="box" size="0.006 0.015 0.025" rgba="0.8 0.8 0.8 1" friction="1.5 0.1 0.1" mass="0.05"/>
+      </body>
+
+      <body name="right_finger" pos="0.03 0 -0.035">
+        <joint name="right_slide" type="slide" axis="-1 0 0" range="0 0.025" damping="5"/>
+        <geom type="box" size="0.006 0.015 0.025" rgba="0.8 0.8 0.8 1" friction="1.5 0.1 0.1" mass="0.05"/>
+      </body>
+    </body>
+
+    <!-- Target Red Cube to Pick Up -->
+    <body name="cube" pos="0 0 0.02">
+      <freejoint/>
+      <geom name="cube_geom" type="box" size="0.02 0.02 0.02" rgba="0.9 0.2 0.2 1" mass="0.03" friction="1.5 0.1 0.1"/>
+    </body>
+  </worldbody>
+
+  <!-- Weld constraint pulls the physical gripper toward your hand mocap pose -->
+  <equality>
+    <weld body1="hand_mocap" body2="gripper_base" solref="0.01 1" solimp="0.9 0.95 0.001"/>
+  </equality>
+
+  <actuator>
+    <position name="left_act" joint="left_slide" kp="100" ctrlrange="0 0.025"/>
+    <position name="right_act" joint="right_slide" kp="100" ctrlrange="0 0.025"/>
+  </actuator>
+</mujoco>
